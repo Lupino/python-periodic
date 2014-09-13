@@ -40,10 +40,9 @@ def to_bytes(s):
 
 def parseHeader(head):
     length = head[0] << 24 | head[1] << 16 | head[2] << 8 | head[3]
-    hasFd = length & 0x80000000 != 0
     length = length & ~0x80000000
 
-    return length, hasFd
+    return length
 
 def makeHeader(data):
     header = [0, 0, 0, 0]
@@ -66,7 +65,7 @@ class BaseClient(object):
 
     def recive(self):
         head = self._sock.recv(4)
-        length, hasFd = parseHeader(head)
+        length = parseHeader(head)
 
         payload = self._sock.recv(length)
         return payload
