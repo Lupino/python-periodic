@@ -58,7 +58,7 @@ class Client(object):
     def submitJob(self, job):
         self._agent.send([utils.SUBMIT_JOB, json.dumps(job)])
         payload = self._agent.recive()
-        if payload == b"ok":
+        if payload == utils.SUCCESS:
             return True
         else:
             return False
@@ -74,7 +74,7 @@ class Client(object):
     def dropFunc(self, func):
         self._agent.send([utils.DROP_FUNC, func])
         payload = self._agent.recive()
-        if payload == b"ok":
+        if payload == utils.SUCCESS:
             return True
         else:
             return False
