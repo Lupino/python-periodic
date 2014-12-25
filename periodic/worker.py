@@ -8,7 +8,6 @@ class Worker(object):
         self._agent = None
         self.connected = False
 
-
     def _connect(self):
         if self._entryPoint.startswith("unix://"):
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -29,10 +28,8 @@ class Worker(object):
         self.connected = True
         return True
 
-
     def add_server(self, entryPoint):
         self._entryPoint = entryPoint
-
 
     def connect(self):
         try:
@@ -47,14 +44,12 @@ class Worker(object):
         connected = self._connect()
         return connected
 
-
     def ping(self):
         self._agent.send(utils.PING)
         payload = self._agent.recive()
         if payload == utils.PONG:
             return True
         return False
-
 
     def grabJob(self):
         self._agent.send(utils.GRAB_JOB)
@@ -64,14 +59,11 @@ class Worker(object):
 
         return Job(payload, self._agent, self._locker)
 
-
     def add_func(self, func):
         self._agent.send([utils.CAN_DO, func])
 
-
     def remove_func(self, func):
         self._agent.send(utils.CANT_DO, func)
-
 
     def close(self):
         self._agent.close()

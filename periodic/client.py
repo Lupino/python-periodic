@@ -28,10 +28,8 @@ class Client(object):
         self.connected = True
         return True
 
-
     def add_server(self, entryPoint):
         self._entryPoint = entryPoint
-
 
     def connect(self):
         try:
@@ -46,14 +44,12 @@ class Client(object):
         connected = self._connect()
         return connected
 
-
     def ping(self):
         self._agent.send(utils.PING)
         payload = self._agent.recive()
         if payload == utils.PONG:
             return True
         return False
-
 
     def submitJob(self, job):
         self._agent.send([utils.SUBMIT_JOB, json.dumps(job)])
@@ -63,13 +59,11 @@ class Client(object):
         else:
             return False
 
-
     def status(self):
         self._agent.send([utils.STATUS])
         payload = self._agent.recive()
 
         return json.loads(str(payload, "utf-8"))
-
 
     def dropFunc(self, func):
         self._agent.send([utils.DROP_FUNC, func])

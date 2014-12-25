@@ -10,47 +10,37 @@ class Job(object):
         self.job_handle = str(payload[1], "UTF-8")
         self.client = client
 
-
     def get(self, key, default=None):
         return self.payload.get(key, default)
-
 
     def done(self):
         self.client.send([utils.JOB_DONE, self.job_handle])
 
-
     def sched_later(self, delay):
         self.client.send([utils.SCHED_LATER, self.job_handle, str(delay)])
 
-
     def fail(self):
         self.client.send([utils.JOB_FAIL, self.job_handle])
-
 
     @property
     def func_name(self):
         return self.payload['func']
 
-
     @property
     def name(self):
         return self.payload.get("name")
-
 
     @property
     def sched_at(self):
         return self.payload["sched_at"]
 
-
     @property
     def timeout(self):
         return self.payload.get("timeout", 0)
 
-
     @property
     def run_at(self):
         return self.payload.get("run_at", self.sched_at)
-
 
     @property
     def workload(self):
