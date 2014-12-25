@@ -24,6 +24,8 @@ SUCCESS = b"\x10"
 
 NULL_CHAR = b"\x01"
 
+MAGIC_REQUEST   = b"\x00REQ"
+MAGIC_RESPONSE  = b"\x00RES"
 
 # client type
 
@@ -46,6 +48,7 @@ def parseHeader(head):
 
     return length
 
+
 def makeHeader(data):
     header = [0, 0, 0, 0]
     length = len(data)
@@ -64,14 +67,16 @@ class BaseClient(object):
     def __init__(self, sock):
         self._sock = sock
 
-
     def recive(self):
+        magic = self._sock.recv(4)
+        if magic != MAGIC_RESPONSE:
+            raise Exception("Magic not match.")
+
         head = self._sock.recv(4)
         length = parseHeader(head)
 
         payload = self._sock.recv(length)
         return payload
-
 
     def send(self, payload):
         if isinstance(payload, list):
@@ -80,9 +85,9 @@ class BaseClient(object):
         elif isinstance(payload, str):
             payload = bytes(payload, 'utf-8')
         header = makeHeader(payload)
+        self._sock.send(MAGIC_REQUEST)
         self._sock.send(header)
         self._sock.send(payload)
-
 
     def close(self):
         self._sock.close()
