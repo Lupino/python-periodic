@@ -59,6 +59,14 @@ class Client(object):
         else:
             return False
 
+    def removeJob(self, job):
+        self._agent.send([utils.REMOVE_JOB, json.dumps(job)])
+        payload = self._agent.recive()
+        if payload == utils.SUCCESS:
+            return True
+        else:
+            return False
+
     def status(self):
         self._agent.send([utils.STATUS])
         payload = self._agent.recive()

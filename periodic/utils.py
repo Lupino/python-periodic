@@ -19,6 +19,7 @@ UNKNOWN     = b"\x0C"
 SUBMIT_JOB = b"\x0D"
 STATUS = b"\x0E"
 DROP_FUNC = b"\x0F"
+REMOVE_JOB = b'\x11'
 
 SUCCESS = b"\x10"
 
