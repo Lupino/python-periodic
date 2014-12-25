@@ -25,6 +25,7 @@ class Worker(object):
                 pass
         self._agent = BaseClient(sock)
         self._agent.send(utils.TYPE_WORKER)
+        self._agent.msgId += 1
         self.connected = True
         return True
 
