@@ -67,7 +67,7 @@ class ConnectionError(Exception):
 class BaseClient(object):
     def __init__(self, sock):
         self._sock = sock
-        self.msgId = 0
+        self.uuid = None
 
     def recive(self):
         magic = self._sock.recv(4)
@@ -79,8 +79,8 @@ class BaseClient(object):
 
         payload = self._sock.recv(length)
         payload = payload.split(NULL_CHAR, 1)
-        msgId = int(payload[0])
-        if self.msgId != msgId:
+        uuid = uuid.UUID(bytes=payload[0])
+        if self.uuid != uuid:
             raise Exception('msg id not match')
         return payload[1]
 
@@ -91,9 +91,9 @@ class BaseClient(object):
         elif isinstance(payload, str):
             payload = bytes(payload, 'utf-8')
 
-        if self.msgId > 0:
-            msgId = bytes(str(self.msgId), "utf-8")
-            payload = msgId + NULL_CHAR + payload
+        if self.uuid:
+            uuid = self.uuid.bytes
+            payload = uuid + NULL_CHAR + payload
 
         header = makeHeader(payload)
         self._sock.send(MAGIC_REQUEST)

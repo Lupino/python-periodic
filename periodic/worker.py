@@ -2,6 +2,7 @@ from .job import Job
 from .utils import BaseClient
 from . import utils
 import socket
+import uuid
 
 class Worker(object):
     def __init__(self):
@@ -25,7 +26,7 @@ class Worker(object):
                 pass
         self._agent = BaseClient(sock)
         self._agent.send(utils.TYPE_WORKER)
-        self._agent.msgId += 1
+        self._agent.uuid = uuid.v1()
         self.connected = True
         return True
 
