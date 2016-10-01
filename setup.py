@@ -7,7 +7,7 @@ packages = [
     'periodic',
 ]
 
-requires = ['periodic']
+requires = []
 
 setup(
     name='periodic',
