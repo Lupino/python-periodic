@@ -14,10 +14,14 @@ class Worker(object):
             sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             sock.connect(self._entryPoint.split("://")[1])
         else:
-            host_port = self._entryPoint.split("://")[1].split(":")
+            host_port = self._entryPoint.split("://")[1]
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             host_port = host_port.split(":")
-            sock.connect((host_port[0], host_port[1]))
+            host = host_port[0]
+            port = 5000
+            if len(host_port) == 2:
+                port = int(host_port[1])
+            sock.connect((host, port))
 
         if self._agent:
             try:
