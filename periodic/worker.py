@@ -30,7 +30,7 @@ class Worker(object):
                 pass
         self._agent = BaseClient(sock)
         self._agent.send(utils.TYPE_WORKER)
-        self._agent.uuid = uuid.v1()
+        self._agent.uuid = uuid.uuid1()
         self.connected = True
         return True
 
