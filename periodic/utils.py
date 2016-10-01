@@ -23,7 +23,7 @@ REMOVE_JOB = b'\x11'
 
 SUCCESS = b"\x10"
 
-NULL_CHAR = b"\x01"
+NULL_CHAR = b"\x00\x01"
 
 MAGIC_REQUEST   = b"\x00REQ"
 MAGIC_RESPONSE  = b"\x00RES"
