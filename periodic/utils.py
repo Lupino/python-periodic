@@ -42,7 +42,18 @@ def to_bytes(s):
     elif isinstance(s, str):
         return bytes(s, "utf-8")
     else:
-        return bytes(s)
+        return bytes(str(s), 'utf-8')
+
+def to_str(s):
+    if isinstance(s, bytes):
+        return str(s, 'utf-8')
+    elif isinstance(s, str):
+        return s
+    else:
+        return str(s)
+
+def to_int(s):
+    return int(s)
 
 
 def parseHeader(head):
@@ -72,18 +83,24 @@ class BaseClient(object):
         self.uuid = None
 
     def recive(self):
+        print('recive start')
         magic = self._sock.recv(4)
+        print('recive magic >>>:', magic)
         if magic != MAGIC_RESPONSE:
             raise Exception("Magic not match.")
 
         head = self._sock.recv(4)
+        print('recive head >>>:', head)
         length = parseHeader(head)
 
         payload = self._sock.recv(length)
+        print('recive payload >>>:', payload[1])
         payload = payload.split(NULL_CHAR, 1)
         u = uuid.UUID(bytes=payload[0])
         if self.uuid != u:
             raise Exception('msg id not match')
+        print('recive >>>:', payload[1])
+        print('recive end')
         return payload[1]
 
     def send(self, payload):
@@ -104,3 +121,29 @@ class BaseClient(object):
 
     def close(self):
         self._sock.close()
+
+def encodeJob(job):
+    ret = [to_bytes(job['func']), to_bytes(job['name'])]
+    if job.get('workload') or job.get('count', 0) > 0 or job.get('sched_at', 0) > 0:
+        ret.append(to_bytes(job.get('sched_at', 0)))
+    if job.get('workload') or job.get('count', 0) > 0:
+        ret.append(to_bytes(job.get('count', 0)))
+    if job.get('workload'):
+        ret.append(to_bytes(job.get('workload', b'')))
+    return NULL_CHAR.join(ret)
+
+def decodeJob(payload):
+    parts = payload.split(NULL_CHAR, 4)
+    size = len(parts)
+
+    job = {
+        'func': to_str(parts[0]),
+        'name': to_str(parts[1]),
+    }
+    if size > 2:
+      job['sched_at'] = to_int(parts[2])
+    if size > 3:
+      job['count'] = to_int(parts[3])
+    if size > 4:
+      job['workload'] = parts[4]
+    return job

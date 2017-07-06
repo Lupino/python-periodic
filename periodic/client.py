@@ -1,6 +1,5 @@
 from .utils import BaseClient
 from . import utils
-import json
 import socket
 import uuid
 
@@ -53,31 +52,29 @@ class Client(object):
     def ping(self):
         self._agent.send(utils.PING)
         payload = self._agent.recive()
+        print("ping>>>:", payload)
         if payload == utils.PONG:
             return True
         return False
 
     def submitJob(self, job):
-        self._agent.send([utils.SUBMIT_JOB, json.dumps(job)])
+        print(job)
+        self._agent.send([utils.SUBMIT_JOB, utils.encodeJob(job)])
+        print("submitJob end")
         payload = self._agent.recive()
+        print(payload)
         if payload == utils.SUCCESS:
             return True
         else:
             return False
 
     def removeJob(self, job):
-        self._agent.send([utils.REMOVE_JOB, json.dumps(job)])
+        self._agent.send([utils.REMOVE_JOB, utils.encodeJob(job)])
         payload = self._agent.recive()
         if payload == utils.SUCCESS:
             return True
         else:
             return False
-
-    def status(self):
-        self._agent.send([utils.STATUS])
-        payload = self._agent.recive()
-
-        return json.loads(str(payload, "utf-8"))
 
     def dropFunc(self, func):
         self._agent.send([utils.DROP_FUNC, func])

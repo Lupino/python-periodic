@@ -1,13 +1,12 @@
-import json
 from . import utils
 
 
 class Job(object):
 
     def __init__(self, payload, client):
-        payload = payload.split(utils.NULL_CHAR)
-        self.payload = json.loads(str(payload[2], "UTF-8"))
-        self.job_handle = str(payload[1], "UTF-8")
+        payload = payload.split(utils.NULL_CHAR, 2)
+        self.payload = utils.decodeJob(payload[2])
+        self.job_handle = utils.to_str(payload[1])
         self.client = client
 
     def get(self, key, default=None):
@@ -35,12 +34,8 @@ class Job(object):
         return self.payload["sched_at"]
 
     @property
-    def timeout(self):
-        return self.payload.get("timeout", 0)
-
-    @property
-    def run_at(self):
-        return self.payload.get("run_at", self.sched_at)
+    def count(self):
+        return self.payload.get("count", 0)
 
     @property
     def workload(self):
