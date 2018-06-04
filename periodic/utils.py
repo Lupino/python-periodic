@@ -1,46 +1,48 @@
-NOOP        = b"\x00"
+import struct
+
+NOOP           = b'\x00'
 # for job
-GRAB_JOB    = b"\x01"
-SCHED_LATER = b"\x02"
-JOB_DONE    = b"\x03"
-JOB_FAIL    = b"\x04"
-WAIT_JOB    = b"\x05"
-NO_JOB      = b"\x06"
+GRAB_JOB       = b'\x01'
+SCHED_LATER    = b'\x02'
+JOB_DONE       = b'\x03'
+JOB_FAIL       = b'\x04'
+JOB_ASSIGN     = b'\x05'
+NO_JOB         = b'\x06'
 # for func
-CAN_DO      = b"\x07"
-CANT_DO     = b"\x08"
+CAN_DO         = b'\x07'
+BROADCAST      = b'\x15'
+CANT_DO        = b'\x08'
 # for test
-PING        = b"\x09"
-PONG        = b"\x0A"
+PING           = b'\x09'
+PONG           = b'\x0A'
 # other
-SLEEP       = b"\x0B"
-UNKNOWN     = b"\x0C"
+SLEEP          = b'\x0B'
+UNKNOWN        = b'\x0C'
 # client command
-SUBMIT_JOB = b"\x0D"
-STATUS = b"\x0E"
-DROP_FUNC = b"\x0F"
-REMOVE_JOB = b'\x11'
+SUBMIT_JOB     = b'\x0D'
+STATUS         = b'\x0E'
+DROP_FUNC      = b'\x0F'
+REMOVE_JOB     = b'\x11'
 
-SUCCESS = b"\x10"
+RUN_JOB        = b'\x19'
+WORK_DATA      = b'\x1A'
 
-NULL_CHAR = b"\x00\x01"
+SUCCESS        = b'\x10'
 
-MAGIC_REQUEST   = b"\x00REQ"
-MAGIC_RESPONSE  = b"\x00RES"
+MAGIC_REQUEST  = b'\x00REQ'
+MAGIC_RESPONSE = b'\x00RES'
 
 # client type
 
-TYPE_CLIENT = b"\x01"
-TYPE_WORKER = b"\x02"
-
-import uuid
+TYPE_CLIENT    = b'\x01'
+TYPE_WORKER    = b'\x02'
 
 
 def to_bytes(s):
     if isinstance(s, bytes):
         return s
     elif isinstance(s, str):
-        return bytes(s, "utf-8")
+        return bytes(s, 'utf-8')
     else:
         return bytes(str(s), 'utf-8')
 
@@ -56,23 +58,6 @@ def to_int(s):
     return int(s)
 
 
-def parseHeader(head):
-    length = head[0] << 24 | head[1] << 16 | head[2] << 8 | head[3]
-    length = length & ~0x80000000
-
-    return length
-
-
-def makeHeader(data):
-    header = [0, 0, 0, 0]
-    length = len(data)
-    header[0] = chr(length >> 24 & 0xff)
-    header[1] = chr(length >> 16 & 0xff)
-    header[2] = chr(length >> 8 & 0xff)
-    header[3] = chr(length >> 0 & 0xff)
-    return bytes(''.join(header), 'utf-8')
-
-
 class ConnectionError(Exception):
     pass
 
@@ -80,70 +65,99 @@ class ConnectionError(Exception):
 class BaseClient(object):
     def __init__(self, sock):
         self._sock = sock
-        self.uuid = None
+        self.msgid = None
 
     def recive(self):
-        print('recive start')
         magic = self._sock.recv(4)
-        print('recive magic >>>:', magic)
         if magic != MAGIC_RESPONSE:
-            raise Exception("Magic not match.")
+            raise Exception('Magic not match.')
 
         head = self._sock.recv(4)
-        print('recive head >>>:', head)
-        length = parseHeader(head)
+        length = decode_int32(head)
 
         payload = self._sock.recv(length)
-        print('recive payload >>>:', payload[1])
-        payload = payload.split(NULL_CHAR, 1)
-        u = uuid.UUID(bytes=payload[0])
-        if self.uuid != u:
-            raise Exception('msg id not match')
-        print('recive >>>:', payload[1])
-        print('recive end')
-        return payload[1]
+
+        msgid = payload[0:4]
+
+        if self.msgid != u:
+            raise Exception('msgid not match')
+
+        return payload[4:]
 
     def send(self, payload):
         if isinstance(payload, list):
             payload = [to_bytes(p) for p in payload]
-            payload = NULL_CHAR.join(payload)
+            payload = b''.join(payload)
         elif isinstance(payload, str):
             payload = bytes(payload, 'utf-8')
 
-        if self.uuid:
-            u = self.uuid.bytes
-            payload = u + NULL_CHAR + payload
+        if self.msgid:
+            payload = self.msgid + payload
 
-        header = makeHeader(payload)
-        self._sock.send(MAGIC_REQUEST)
-        self._sock.send(header)
-        self._sock.send(payload)
+        payload = encode_str32(payload)
+        self._sock.send(MAGIC_REQUEST + payload)
 
     def close(self):
         self._sock.close()
 
-def encodeJob(job):
-    ret = [to_bytes(job['func']), to_bytes(job['name'])]
-    if job.get('workload') or job.get('count', 0) > 0 or job.get('sched_at', 0) > 0:
-        ret.append(to_bytes(job.get('sched_at', 0)))
-    if job.get('workload') or job.get('count', 0) > 0:
-        ret.append(to_bytes(job.get('count', 0)))
-    if job.get('workload'):
-        ret.append(to_bytes(job.get('workload', b'')))
-    return NULL_CHAR.join(ret)
 
-def decodeJob(payload):
-    parts = payload.split(NULL_CHAR, 4)
-    size = len(parts)
+def encode_str8(data = b''):
+    return encode_int8(len(data)) + data
 
-    job = {
-        'func': to_str(parts[0]),
-        'name': to_str(parts[1]),
-    }
-    if size > 2:
-      job['sched_at'] = to_int(parts[2])
-    if size > 3:
-      job['count'] = to_int(parts[3])
-    if size > 4:
-      job['workload'] = parts[4]
+def encode_str32(data = b''):
+    return encode_int32(len(data)) + data
+
+def encode_int8(n = 0):
+    return struct.pack('>B', n)
+
+def encode_int16(n = 0):
+    return struct.pack('>H', n)
+
+def encode_int32(n = 0):
+    return struct.pack('>I', n)
+
+def encode_int64(n = 0):
+    return struct.pack('>Q', n)
+
+def decode_int8(n):
+    return struct.unpack('>B', n)
+
+def decode_int16(n):
+    return struct.unpack('>H', n)
+
+def decode_int32(n):
+    return struct.unpack('>I', n)
+
+def decode_int64(n):
+    return struct.unpack('>Q', n)
+
+def encode_job(job):
+    return ''.join([
+        encode_str8(job['func']),
+        encode_str8(job['name']),
+        encode_str32(job.get('workload', b'')),
+        encode_int64(job.get('sched_at', 0)),
+        encode_int32(job.get('count', 0))
+    ])
+
+def decode_job(payload):
+    job = {}
+
+    h = decode_int8(payload[0:1])
+    job['func'] = payload[1:h + 1]
+
+    payload = payload[h + 1:]
+
+    h = decode_int8(payload[0:1])
+    job['name'] = payload[1:h + 1]
+
+    payload = payload[h + 1:]
+
+    h = decode_int32(payload[0:4])
+    job['workload'] = payload[4:h+4]
+    payload = payload[h+4:]
+
+    job['sched_at'] = decode_int64(payload[0:8])
+
+    job['count'] = decode_int16(payload[8:12])
     return job

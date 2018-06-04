@@ -4,9 +4,12 @@ from . import utils
 class Job(object):
 
     def __init__(self, payload, client):
-        payload = payload.split(utils.NULL_CHAR, 2)
-        self.payload = utils.decodeJob(payload[2])
-        self.job_handle = utils.to_str(payload[1])
+        h = utils.decode_int8(payload[0:1])
+        self.job_handle = payload[0:h + 1]
+
+        payload = payload[h+1:]
+
+        self.payload = utils.decode_job(payload)
         self.client = client
 
     def get(self, key, default=None):
@@ -16,7 +19,10 @@ class Job(object):
         self.client.send([utils.JOB_DONE, self.job_handle])
 
     def sched_later(self, delay):
-        self.client.send([utils.SCHED_LATER, self.job_handle, str(delay)])
+        self.client.send([utils.SCHED_LATER, self.job_handle, utils.encode_int64(delay)], utils.encode_int16(0))
+
+    def data(self, dat):
+        self.client.send([utils.SCHED_LATER, self,job_handle, dat])
 
     def fail(self):
         self.client.send([utils.JOB_FAIL, self.job_handle])
@@ -27,16 +33,16 @@ class Job(object):
 
     @property
     def name(self):
-        return self.payload.get("name")
+        return self.payload.get('name')
 
     @property
     def sched_at(self):
-        return self.payload["sched_at"]
+        return self.payload['sched_at']
 
     @property
     def count(self):
-        return self.payload.get("count", 0)
+        return self.payload.get('count', 0)
 
     @property
     def workload(self):
-        return self.payload.get("workload")
+        return self.payload.get('workload')
