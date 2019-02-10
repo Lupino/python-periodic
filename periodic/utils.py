@@ -25,7 +25,6 @@ DROP_FUNC      = b'\x0F'
 REMOVE_JOB     = b'\x11'
 
 RUN_JOB        = b'\x19'
-WORK_DATA      = b'\x1A'
 
 SUCCESS        = b'\x10'
 

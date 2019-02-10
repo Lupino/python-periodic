@@ -15,14 +15,11 @@ class Job(object):
     def get(self, key, default=None):
         return self.payload.get(key, default)
 
-    def done(self):
-        self.client.send([utils.JOB_DONE, self.job_handle])
+    def done(self, buf = b''):
+        self.client.send([utils.JOB_DONE, self.job_handle, buf])
 
     def sched_later(self, delay):
         self.client.send([utils.SCHED_LATER, self.job_handle, utils.encode_int64(delay)], utils.encode_int16(0))
-
-    def data(self, dat):
-        self.client.send([utils.SCHED_LATER, self,job_handle, dat])
 
     def fail(self):
         self.client.send([utils.JOB_FAIL, self.job_handle])
