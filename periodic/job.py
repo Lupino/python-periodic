@@ -20,6 +20,23 @@ class Job(object):
     def fail(self):
         self.client.send([utils.JOB_FAIL, self.job_handle])
 
+    def acquire(self, name, count):
+        self.client.send([utils.ACQUIRE, utils.encode_str8(name), utils.encode_int16(count), self.job_handle]
+        payload = self.client.recive()
+        if payload[0:1] == cmd.ACQUIRED:
+            if payload[1] == 1:
+                return True
+        return False
+
+    def release(self, name):
+        self.client.send([utils.RELEASE, utils.encode_str8(name), self.job_handle]
+
+    def with_lock(self, name, count, task):
+        acquired = self.acquire(name, count)
+        if acquired:
+            task()
+            self.release(name)
+
     @property
     def func_name(self):
         return self.payload['func']

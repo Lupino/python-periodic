@@ -26,6 +26,10 @@ REMOVE_JOB     = b'\x11'
 
 RUN_JOB        = b'\x19'
 
+ACQUIRED       = b'\x1A'
+ACQUIRE        = b'\x1B'
+RELEASE        = b'\x1C'
+
 SUCCESS        = b'\x10'
 
 MAGIC_REQUEST  = b'\x00REQ'
