@@ -1,4 +1,5 @@
 import struct
+from binascii import crc32
 
 NOOP           = b'\x00'
 # for job
@@ -78,7 +79,13 @@ class BaseClient(object):
         head = self._sock.recv(4)
         length = decode_int32(head)
 
+        crc = self._sock.recv(4)
+        crc = decode_int32(crc)
+
         payload = self._sock.recv(length)
+
+        if crc != crc32(payload):
+            raise Exception('crc not match')
 
         msgid = payload[0:4]
 
@@ -98,7 +105,9 @@ class BaseClient(object):
             payload = self.msgid + payload
 
         payload = encode_str32(payload)
-        self._sock.send(MAGIC_REQUEST + payload)
+        size = encode_int32(len(payload))
+        crc = encode_int32(crc32(payload))
+        self._sock.send(MAGIC_REQUEST + size + crc + payload)
 
     def close(self):
         self._sock.close()
